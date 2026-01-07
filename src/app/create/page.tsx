@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useMemo } from 'react';
+import { useState, useRef, useMemo, useEffect } from 'react';
 import { useBusiness, useBills } from '@/hooks/useBillData';
 import { BillTemplate } from '@/components/BillTemplates';
 import { BillItem, Bill } from '@/lib/types';
@@ -32,6 +32,17 @@ export default function CreateBillPage() {
   const [showPreview, setShowPreview] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [billForPdf, setBillForPdf] = useState<Bill | null>(null);
+  const [lastAddedId, setLastAddedId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (lastAddedId) {
+      const input = document.getElementById(`item-name-${lastAddedId}`);
+      if (input) {
+        input.focus();
+        setLastAddedId(null);
+      }
+    }
+  }, [lastAddedId, items]);
 
   const updateItem = (id: string, field: keyof BillItem, value: string | number) => {
     setItems(prev => prev.map(item => {
@@ -45,7 +56,9 @@ export default function CreateBillPage() {
   };
 
   const addItem = () => {
-    setItems(prev => [...prev, { id: crypto.randomUUID(), name: '', quantity: 1, rate: 0, total: 0 }]);
+    const newId = crypto.randomUUID();
+    setLastAddedId(newId);
+    setItems(prev => [...prev, { id: newId, name: '', quantity: 1, rate: 0, total: 0 }]);
   };
 
   const removeItem = (id: string) => {
@@ -276,6 +289,7 @@ export default function CreateBillPage() {
                   <div key={item.id} className="grid grid-cols-12 gap-2 items-center bg-slate-50 p-3 rounded-xl">
                     <div className="col-span-12 sm:col-span-5">
                       <Input
+                        id={`item-name-${item.id}`}
                         value={item.name}
                         onChange={(e) => updateItem(item.id, 'name', e.target.value)}
                         placeholder="Item name"
